@@ -1,62 +1,213 @@
+
 import streamlit as st
 import requests
-
+import re
 
 # =========================================================
-# CẤU HÌNH
+# MR HÀO BAKERY - STREAMLIT APP
 # =========================================================
 
 st.set_page_config(
     page_title="MR HÀO Bakery",
     page_icon="🍰",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed",
 )
 
-
 # =========================================================
-# CSS
+# CSS - FIX FONT / TEXT INVISIBLE ON MOBILE
 # =========================================================
 
 st.markdown("""
 <style>
-
+/* Nền toàn trang */
 .stApp {
-    background-color: #fff8f5;
+    background: #fff8f5 !important;
+    color: #3b2923 !important;
 }
 
+/* Tất cả chữ mặc định */
+.stApp,
+.stApp p,
+.stApp span,
+.stApp label,
+.stApp div,
+.stApp li,
+.stApp h1,
+.stApp h2,
+.stApp h3,
+.stApp h4,
+.stApp h5,
+.stApp h6 {
+    color: #3b2923 !important;
+}
+
+/* Header */
 .hero {
-    padding: 30px;
-    border-radius: 20px;
+    background: linear-gradient(135deg, #ffe0d2, #fff1ea);
+    border: 1px solid #ffd0bd;
+    border-radius: 22px;
+    padding: 28px 18px;
     text-align: center;
-    background: linear-gradient(
-        135deg,
-        #ffe5d9,
-        #fff0e8
-    );
-    margin-bottom: 20px;
+    margin: 8px 0 22px 0;
+    box-shadow: 0 5px 18px rgba(120, 70, 40, 0.08);
 }
 
 .hero h1 {
-    color: #8b4513;
+    color: #8b4513 !important;
+    font-size: 34px !important;
+    margin-bottom: 8px !important;
 }
 
-.price {
-    font-size: 20px;
-    font-weight: bold;
+.hero h3,
+.hero p {
+    color: #6f4030 !important;
 }
 
-.chat-title {
-    background-color: #ffe5d9;
+/* Tiêu đề */
+h1, h2, h3 {
+    color: #7b3f24 !important;
+}
+
+/* Input */
+.stTextInput label,
+.stTextArea label,
+.stNumberInput label {
+    color: #5b392d !important;
+    font-weight: 600 !important;
+}
+
+.stTextInput input,
+.stTextArea textarea,
+.stNumberInput input {
+    background: #ffffff !important;
+    color: #2d211d !important;
+    -webkit-text-fill-color: #2d211d !important;
+    border: 1px solid #e0b9a8 !important;
+    border-radius: 12px !important;
+}
+
+/* Placeholder */
+.stTextInput input::placeholder,
+.stTextArea textarea::placeholder {
+    color: #8c7770 !important;
+    opacity: 1 !important;
+}
+
+/* Select / expander */
+[data-testid="stExpander"] {
+    background: #ffffff !important;
+    border: 1px solid #ead0c5 !important;
+    border-radius: 15px !important;
+    margin-bottom: 8px !important;
+}
+
+[data-testid="stExpander"] summary,
+[data-testid="stExpander"] summary span,
+[data-testid="stExpander"] summary p {
+    color: #3b2923 !important;
+}
+
+/* Button */
+.stButton > button {
+    background: #c96f4b !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+}
+
+.stButton > button p,
+.stButton > button span {
+    color: #ffffff !important;
+}
+
+/* Thông báo */
+.stAlert,
+.stAlert p,
+.stAlert span {
+    color: #3b2923 !important;
+}
+
+/* Chat */
+.chat-box {
+    background: #ffe5d9;
+    border: 1px solid #ffd0bd;
+    border-radius: 18px;
     padding: 15px;
-    border-radius: 15px;
+    margin-top: 10px;
 }
 
+[data-testid="stChatMessage"] p,
+[data-testid="stChatMessage"] span,
+[data-testid="stChatMessage"] div {
+    color: #3b2923 !important;
+}
+
+/* Chat input */
+[data-testid="stChatInput"] {
+    background: #ffffff !important;
+}
+
+[data-testid="stChatInput"] textarea {
+    background: #ffffff !important;
+    color: #2d211d !important;
+    -webkit-text-fill-color: #2d211d !important;
+}
+
+[data-testid="stChatInput"] textarea::placeholder {
+    color: #806d65 !important;
+}
+
+/* Giá */
+.price {
+    color: #b6532f !important;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+/* Card bánh */
+.cake-card {
+    background: #ffffff;
+    border: 1px solid #ead0c5;
+    border-radius: 16px;
+    padding: 14px;
+    min-height: 130px;
+    box-shadow: 0 3px 10px rgba(120, 70, 40, 0.05);
+}
+
+.cake-card h3,
+.cake-card p {
+    color: #3b2923 !important;
+}
+
+/* Divider */
+hr {
+    border-color: #e8cfc4 !important;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    color: #76584c !important;
+    padding: 20px 0 40px 0;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+    .hero h1 {
+        font-size: 28px !important;
+    }
+
+    .hero {
+        padding: 22px 12px;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
-
 # =========================================================
-# 20 LOẠI BÁNH
+# MENU 20 BÁNH
 # =========================================================
 
 cakes = [
@@ -79,12 +230,13 @@ cakes = [
     ("Bánh Flan", 25000, "🍮"),
     ("Bánh Sinh Nhật", 250000, "🎂"),
     ("Bánh Mật Ong", 45000, "🍯"),
-    ("Bánh Kem Dâu", 180000, "🍓")
+    ("Bánh Kem Dâu", 180000, "🍓"),
 ]
 
+cake_map = {name.lower(): (name, price, emoji) for name, price, emoji in cakes}
 
 # =========================================================
-# SESSION STATE
+# SESSION
 # =========================================================
 
 if "cart" not in st.session_state:
@@ -95,20 +247,262 @@ if "messages" not in st.session_state:
         {
             "role": "assistant",
             "content": (
-                "👋 Xin chào! Mình là trợ lý AI của "
-                "MR HÀO Bakery.\n\n"
-                "Bạn có thể hỏi mình tự nhiên về:\n"
-                "🍰 bánh\n"
-                "💰 giá\n"
-                "🛒 đặt hàng\n"
-                "🚚 giao hàng\n"
-                "💳 thanh toán\n"
-                "🎂 bánh sinh nhật\n"
-                "⭐ gợi ý bánh"
-            )
+                "👋 Xin chào! Mình là trợ lý AI của MR HÀO Bakery.\n\n"
+                "Bạn có thể hỏi tự nhiên như:\n"
+                "• Bánh nào rẻ nhất?\n"
+                "• Mình có 100k thì mua gì?\n"
+                "• Bánh nào hợp sinh nhật?\n"
+                "• Thêm 2 bánh dâu vào giỏ\n"
+                "• Giỏ hàng của mình bao nhiêu?"
+            ),
         }
     ]
 
+# =========================================================
+# HÀM GIỎ HÀNG
+# =========================================================
+
+def cart_total():
+    return sum(
+        item["price"] * item["quantity"]
+        for item in st.session_state.cart.values()
+    )
+
+def cart_text():
+    if not st.session_state.cart:
+        return "Giỏ hàng đang trống."
+
+    lines = []
+    for name, item in st.session_state.cart.items():
+        subtotal = item["price"] * item["quantity"]
+        lines.append(
+            f"- {name}: {item['quantity']} cái × "
+            f"{item['price']:,} VNĐ = {subtotal:,} VNĐ"
+        )
+
+    lines.append(f"Tổng: {cart_total():,} VNĐ")
+    return "\n".join(lines)
+
+# =========================================================
+# TÌM TÊN BÁNH TRONG CÂU
+# =========================================================
+
+def find_cake(question):
+    q = question.lower().strip()
+
+    # Tên đầy đủ trước
+    for name, price, emoji in cakes:
+        if name.lower() in q:
+            return name, price, emoji
+
+    # Từ khóa ngắn
+    aliases = {
+        "dâu": "Bánh Dâu",
+        "dâu tây": "Bánh Dâu",
+        "chocolate": "Chocolate Cake",
+        "socola": "Chocolate Cake",
+        "sô cô la": "Chocolate Cake",
+        "matcha": "Matcha Cake",
+        "cheese": "Cheesecake",
+        "xoài": "Bánh Xoài",
+        "việt quất": "Bánh Việt Quất",
+        "chuối": "Bánh Chuối",
+        "dừa": "Bánh Dừa",
+        "chanh": "Bánh Chanh",
+        "cam": "Bánh Cam",
+        "táo": "Bánh Táo",
+        "cupcake": "Cupcake",
+        "donut": "Donut",
+        "tiramisu": "Tiramisu",
+        "croissant": "Croissant",
+        "tart": "Tart Trứng",
+        "flan": "Bánh Flan",
+        "sinh nhật": "Bánh Sinh Nhật",
+        "mật ong": "Bánh Mật Ong",
+        "kem dâu": "Bánh Kem Dâu",
+    }
+
+    for alias, real_name in aliases.items():
+        if alias in q:
+            name, price, emoji = cake_map[real_name.lower()]
+            return name, price, emoji
+
+    return None
+
+# =========================================================
+# XỬ LÝ LỆNH GIỎ HÀNG
+# =========================================================
+
+def handle_cart_command(question):
+    q = question.lower().strip()
+
+    # Xóa toàn bộ giỏ
+    if any(x in q for x in [
+        "xóa giỏ", "xoá giỏ", "xóa hết", "xoá hết",
+        "clear cart", "bỏ hết"
+    ]):
+        st.session_state.cart = {}
+        return "🗑️ Mình đã xóa toàn bộ giỏ hàng."
+
+    # Xem giỏ
+    if any(x in q for x in [
+        "giỏ hàng", "gio hang", "cart"
+    ]) and not any(x in q for x in [
+        "thêm", "them", "bỏ", "bo", "xóa", "xoá", "đổi"
+    ]):
+        return "🛒 Giỏ hàng hiện tại:\n\n" + cart_text()
+
+    cake = find_cake(q)
+
+    if not cake:
+        return None
+
+    name, price, emoji = cake
+
+    # Xóa/bỏ sản phẩm
+    if any(x in q for x in [
+        "bỏ", "bo ", "xóa", "xoá", "remove"
+    ]):
+        if name in st.session_state.cart:
+            del st.session_state.cart[name]
+            return f"🗑️ Đã bỏ {emoji} {name} khỏi giỏ."
+        return f"ℹ️ {name} hiện không có trong giỏ."
+
+    # Số lượng: "2 bánh", "2 cái", "x2", "2"
+    quantity_match = re.search(
+        r"(?:x\s*)?(\d+)\s*(?:cái|chiếc|bánh)?",
+        q
+    )
+
+    quantity = int(quantity_match.group(1)) if quantity_match else 1
+
+    if quantity > 20:
+        quantity = 20
+
+    # Thêm / đặt / mua
+    if any(x in q for x in [
+        "thêm", "them", "mua", "đặt", "dat", "cho vào giỏ",
+        "bỏ vào giỏ", "add"
+    ]):
+        if name in st.session_state.cart:
+            st.session_state.cart[name]["quantity"] += quantity
+        else:
+            st.session_state.cart[name] = {
+                "price": price,
+                "quantity": quantity
+            }
+
+        new_qty = st.session_state.cart[name]["quantity"]
+
+        return (
+            f"✅ Đã thêm {quantity} {emoji} {name} vào giỏ.\n\n"
+            f"Số lượng {name}: {new_qty}\n"
+            f"💰 Tổng giỏ: {cart_total():,} VNĐ"
+        )
+
+    return None
+
+# =========================================================
+# SYSTEM PROMPT
+# =========================================================
+
+menu_text = "\n".join(
+    f"- {emoji} {name}: {price:,} VNĐ"
+    for name, price, emoji in cakes
+)
+
+SYSTEM_PROMPT = f"""
+Bạn là trợ lý AI của MR HÀO Bakery.
+
+Hãy nói tiếng Việt tự nhiên, thân thiện, ngắn gọn.
+Không nói rằng bạn là con người.
+Không bịa sản phẩm hoặc giá.
+
+MENU:
+{menu_text}
+
+GIỎ HÀNG HIỆN TẠI:
+{cart_text()}
+
+Bạn có thể:
+- Tư vấn bánh theo sở thích.
+- Tư vấn theo ngân sách.
+- Tư vấn bánh sinh nhật.
+- Trả lời giá.
+- Giới thiệu menu.
+- Hướng dẫn đặt bánh.
+- Giải thích tổng tiền.
+- Nói chuyện tự nhiên.
+
+Nếu thông tin giao hàng/thanh toán chưa có trong hệ thống,
+hãy nói rằng khách cần xác nhận với cửa hàng.
+"""
+
+# =========================================================
+# AI
+# =========================================================
+
+def ask_ai(question):
+    try:
+        api_key = st.secrets["OPENROUTER_API_KEY"]
+    except Exception:
+        return (
+            "⚠️ Chatbot AI chưa được cấu hình API key.\n\n"
+            "Bạn vào Streamlit → Settings → Secrets và thêm:\n\n"
+            "OPENROUTER_API_KEY = \"API_KEY_CUA_BAN\""
+        )
+
+    url = "https://openrouter.ai/api/v1/chat/completions"
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://mr-hao-bakery.streamlit.app",
+        "X-OpenRouter-Title": "MR HÀO Bakery",
+    }
+
+    # Không lấy câu hỏi hiện tại 2 lần
+    history = st.session_state.messages[-10:]
+
+    messages = [
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT,
+        }
+    ]
+
+    messages.extend(history)
+
+    data = {
+        "model": "openrouter/free",
+        "messages": messages,
+        "temperature": 0.7,
+        "max_tokens": 500,
+    }
+
+    try:
+        response = requests.post(
+            url,
+            headers=headers,
+            json=data,
+            timeout=60,
+        )
+
+        if response.status_code != 200:
+            return (
+                "⚠️ Chatbot đang gặp lỗi kết nối.\n"
+                f"Mã lỗi: {response.status_code}"
+            )
+
+        result = response.json()
+
+        return result["choices"][0]["message"]["content"]
+
+    except requests.exceptions.Timeout:
+        return "⏳ Chatbot phản hồi hơi chậm. Bạn thử lại nhé."
+
+    except Exception:
+        return "⚠️ Không thể kết nối chatbot lúc này. Bạn thử lại nhé."
 
 # =========================================================
 # HEADER
@@ -116,18 +510,11 @@ if "messages" not in st.session_state:
 
 st.markdown("""
 <div class="hero">
-
-<h1>🍰 MR HÀO BAKERY</h1>
-
-<h3>Ngọt ngào trong từng chiếc bánh ❤️</h3>
-
-<p>
-20 loại bánh • Đặt hàng • Chatbot AI • Tính tiền tự động
-</p>
-
+    <h1>🍰 MR HÀO BAKERY</h1>
+    <h3>Ngọt ngào trong từng chiếc bánh ❤️</h3>
+    <p>20 loại bánh • Đặt hàng • Tính tiền • Chatbot AI</p>
 </div>
 """, unsafe_allow_html=True)
-
 
 # =========================================================
 # MENU
@@ -146,15 +533,16 @@ for i, (name, price, emoji) in enumerate(cakes):
         continue
 
     with st.expander(
-        f"{emoji} {name} — {price:,} VNĐ"
+        f"{emoji}  {name}  —  {price:,} VNĐ"
     ):
-
-        st.subheader(
-            f"{emoji} {name}"
-        )
-
-        st.write(
-            f"💰 Giá: **{price:,} VNĐ**"
+        st.markdown(
+            f"""
+            <div class="cake-card">
+                <h3>{emoji} {name}</h3>
+                <p class="price">💰 {price:,} VNĐ</p>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
         quantity = st.number_input(
@@ -162,334 +550,105 @@ for i, (name, price, emoji) in enumerate(cakes):
             min_value=0,
             max_value=20,
             value=0,
-            key=f"cake_{i}"
+            step=1,
+            key=f"cake_{i}",
         )
 
         if quantity > 0:
-
             st.session_state.cart[name] = {
                 "price": price,
-                "quantity": quantity
+                "quantity": quantity,
             }
-
         elif name in st.session_state.cart:
-
             del st.session_state.cart[name]
 
-
 # =========================================================
-# GIỎ HÀNG
+# CART
 # =========================================================
 
 st.divider()
-
 st.header("🛒 GIỎ HÀNG")
 
-total = 0
-
 if not st.session_state.cart:
-
-    st.info("Giỏ hàng đang trống.")
-
+    st.info("🛒 Giỏ hàng đang trống.")
 else:
+    for name, item in list(st.session_state.cart.items()):
+        subtotal = item["price"] * item["quantity"]
 
-    for name, item in st.session_state.cart.items():
+        col1, col2 = st.columns([4, 1])
 
-        subtotal = (
-            item["price"] *
-            item["quantity"]
-        )
+        with col1:
+            st.write(
+                f"🍰 **{name}** — "
+                f"{item['quantity']} × "
+                f"{item['price']:,} = "
+                f"**{subtotal:,} VNĐ**"
+            )
 
-        total += subtotal
-
-        st.write(
-            f"🍰 {name} | "
-            f"{item['quantity']} × "
-            f"{item['price']:,} = "
-            f"**{subtotal:,} VNĐ**"
-        )
+        with col2:
+            if st.button(
+                "Xóa",
+                key=f"remove_{name}"
+            ):
+                del st.session_state.cart[name]
+                st.rerun()
 
 st.success(
-    f"💰 TỔNG TIỀN: {total:,} VNĐ"
+    f"💰 TỔNG TIỀN: {cart_total():,} VNĐ"
 )
 
-
 # =========================================================
-# THÔNG TIN KHÁCH HÀNG
+# CUSTOMER
 # =========================================================
 
 st.header("👤 THÔNG TIN KHÁCH HÀNG")
 
 customer = st.text_input(
-    "Họ và tên"
+    "Họ và tên",
+    placeholder="Nguyễn Văn A"
 )
 
 phone = st.text_input(
-    "Số điện thoại"
+    "Số điện thoại",
+    placeholder="09xxxxxxxx"
 )
 
 address = st.text_area(
-    "Địa chỉ nhận bánh"
+    "Địa chỉ nhận bánh",
+    placeholder="Nhập địa chỉ..."
 )
 
 note = st.text_area(
-    "Ghi chú"
+    "Ghi chú",
+    placeholder="Ví dụ: giao buổi chiều..."
 )
-
-
-# =========================================================
-# ĐẶT BÁNH
-# =========================================================
 
 if st.button(
     "🍰 XÁC NHẬN ĐẶT BÁNH",
     use_container_width=True
 ):
+    total = cart_total()
 
     if total == 0:
+        st.warning("Bạn chưa chọn bánh.")
 
-        st.warning(
-            "Bạn chưa chọn bánh."
-        )
+    elif not customer.strip():
+        st.warning("Vui lòng nhập họ tên.")
 
-    elif not customer:
+    elif not phone.strip():
+        st.warning("Vui lòng nhập số điện thoại.")
 
-        st.warning(
-            "Vui lòng nhập họ tên."
-        )
-
-    elif not phone:
-
-        st.warning(
-            "Vui lòng nhập số điện thoại."
-        )
-
-    elif not address:
-
-        st.warning(
-            "Vui lòng nhập địa chỉ."
-        )
+    elif not address.strip():
+        st.warning("Vui lòng nhập địa chỉ.")
 
     else:
-
-        st.success(
-            "🎉 Đặt bánh thành công!"
-        )
-
-        st.write(
-            f"👤 Người đặt: {customer}"
-        )
-
-        st.write(
-            f"📞 Số điện thoại: {phone}"
-        )
-
-        st.write(
-            f"📍 Địa chỉ: {address}"
-        )
-
-        st.write(
-            f"📝 Ghi chú: {note}"
-        )
-
-        st.write(
-            f"💰 Tổng tiền: {total:,} VNĐ"
-        )
-
-
-# =========================================================
-# TẠO THÔNG TIN MENU CHO AI
-# =========================================================
-
-menu_text = ""
-
-for name, price, emoji in cakes:
-
-    menu_text += (
-        f"- {emoji} {name}: "
-        f"{price:,} VNĐ\n"
-    )
-
-
-# =========================================================
-# SYSTEM PROMPT CHO CHATBOT
-# =========================================================
-
-SYSTEM_PROMPT = f"""
-Bạn là trợ lý AI chính thức của MR HÀO Bakery.
-
-Nhiệm vụ:
-- Tư vấn bánh.
-- Trả lời giá bánh.
-- Giới thiệu menu.
-- Tư vấn bánh theo ngân sách.
-- Tư vấn bánh sinh nhật.
-- Hướng dẫn đặt hàng.
-- Giải thích giỏ hàng.
-- Giải thích cách tính tiền.
-- Trả lời câu hỏi về giao hàng.
-- Trả lời câu hỏi về thanh toán.
-- Nói chuyện tự nhiên, thân thiện bằng tiếng Việt.
-
-THÔNG TIN CỬA HÀNG:
-
-MR HÀO Bakery có 20 loại bánh:
-
-{menu_text}
-
-QUY TẮC:
-
-1. Không tự bịa ra sản phẩm không có trong menu.
-
-2. Không tự bịa giá.
-
-3. Nếu khách hỏi giá, dùng đúng giá trong menu.
-
-4. Nếu khách hỏi:
-"Mình có 50k nên mua gì?"
-hãy dựa vào menu để gợi ý.
-
-5. Nếu khách hỏi:
-"Bánh nào hợp sinh nhật?"
-hãy gợi ý Bánh Sinh Nhật hoặc Bánh Kem Dâu.
-
-6. Nếu khách hỏi:
-"Bánh nào rẻ nhất?"
-hãy kiểm tra menu.
-
-7. Nếu khách hỏi cách đặt:
-Hướng dẫn:
-Chọn bánh → chọn số lượng → kiểm tra giỏ hàng
-→ nhập thông tin → xác nhận đặt bánh.
-
-8. Phí giao hàng hiện chưa được tính tự động.
-
-9. Thời gian giao hàng cần cửa hàng xác nhận.
-
-10. Nếu không biết thông tin, nói rõ rằng thông tin
-cần được cửa hàng xác nhận.
-
-11. Không nói rằng bạn là con người.
-
-12. Trả lời ngắn gọn, dễ hiểu.
-
-13. Có thể sử dụng emoji phù hợp.
-
-14. Không cần nói rằng bạn đang sử dụng API.
-
-15. Khi khách hỏi câu hỏi thông thường,
-hãy trả lời tự nhiên thay vì bắt họ phải dùng
-đúng từ khóa.
-"""
-
-
-# =========================================================
-# HÀM GỌI OPENROUTER
-# =========================================================
-
-def ask_ai(question):
-
-    try:
-
-        api_key = st.secrets["OPENROUTER_API_KEY"]
-
-    except Exception:
-
-        return (
-            "⚠️ Chưa cấu hình OPENROUTER_API_KEY.\n\n"
-            "Bạn hãy vào Streamlit Cloud → Settings → "
-            "Secrets và thêm API key."
-        )
-
-
-    url = "https://openrouter.ai/api/v1/chat/completions"
-
-
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://mr-hao-bakery.streamlit.app",
-        "X-OpenRouter-Title": "MR HÀO Bakery"
-    }
-
-
-    # Chỉ gửi một phần lịch sử để tránh request quá dài
-    history = st.session_state.messages[-12:]
-
-
-    messages = [
-        {
-            "role": "system",
-            "content": SYSTEM_PROMPT
-        }
-    ]
-
-
-    messages.extend(history)
-
-
-    messages.append(
-        {
-            "role": "user",
-            "content": question
-        }
-    )
-
-
-    data = {
-        "model": "openrouter/free",
-        "messages": messages,
-        "temperature": 0.7,
-        "max_tokens": 500
-    }
-
-
-    try:
-
-        response = requests.post(
-            url,
-            headers=headers,
-            json=data,
-            timeout=60
-        )
-
-
-        if response.status_code != 200:
-
-            return (
-                "⚠️ Chatbot đang gặp lỗi kết nối.\n\n"
-                f"Mã lỗi: {response.status_code}"
-            )
-
-
-        result = response.json()
-
-
-        answer = (
-            result["choices"][0]
-            ["message"]
-            ["content"]
-        )
-
-
-        return answer
-
-
-    except requests.exceptions.Timeout:
-
-        return (
-            "⏳ Chatbot phản hồi hơi chậm. "
-            "Bạn thử gửi lại câu hỏi nhé."
-        )
-
-
-    except Exception as e:
-
-        return (
-            "⚠️ Không thể kết nối chatbot lúc này.\n\n"
-            f"Chi tiết: {str(e)}"
-        )
-
+        st.success("🎉 Đặt bánh thành công!")
+
+        st.write(f"👤 Người đặt: **{customer}**")
+        st.write(f"📞 Số điện thoại: **{phone}**")
+        st.write(f"📍 Địa chỉ: **{address}**")
+        st.write(f"📝 Ghi chú: **{note or 'Không có'}**")
+        st.write(f"💰 Tổng tiền: **{total:,} VNĐ**")
 
 # =========================================================
 # CHATBOT
@@ -497,159 +656,98 @@ def ask_ai(question):
 
 st.divider()
 
-st.markdown(
-    """
-    <div class="chat-title">
-        <h2>🤖 CHATBOT MR HÀO AI</h2>
-        <p>
-        Hỏi tự nhiên như đang nói chuyện với nhân viên bán bánh.
-        </p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# =========================================================
-# HIỂN THỊ LỊCH SỬ
-# =========================================================
+st.markdown("""
+<div class="chat-box">
+    <h2>🤖 CHATBOT MR HÀO AI</h2>
+    <p>Hãy hỏi tự nhiên như đang nói chuyện với nhân viên.</p>
+</div>
+""", unsafe_allow_html=True)
 
 for message in st.session_state.messages:
-
     with st.chat_message(
         message["role"],
-        avatar=(
-            "🍰"
-            if message["role"] == "assistant"
-            else "👤"
-        )
+        avatar="🍰" if message["role"] == "assistant" else "👤"
     ):
-
-        st.markdown(
-            message["content"]
-        )
-
-
-# =========================================================
-# NHẬP CÂU HỎI
-# =========================================================
+        st.markdown(message["content"])
 
 question = st.chat_input(
     "Ví dụ: Mình có 100k thì nên mua bánh gì?"
 )
 
-
 if question:
+    # Lưu câu hỏi đúng 1 lần
+    st.session_state.messages.append({
+        "role": "user",
+        "content": question,
+    })
 
-    # Lưu câu hỏi
-    st.session_state.messages.append(
-        {
-            "role": "user",
-            "content": question
-        }
-    )
-
-
-    # Hiển thị câu hỏi
-    with st.chat_message(
-        "user",
-        avatar="👤"
-    ):
-
+    with st.chat_message("user", avatar="👤"):
         st.markdown(question)
 
+    # Ưu tiên lệnh giỏ hàng để không cho AI tự đoán số lượng
+    cart_answer = handle_cart_command(question)
 
-    # Gọi AI
-    with st.chat_message(
-        "assistant",
-        avatar="🍰"
-    ):
+    with st.chat_message("assistant", avatar="🍰"):
+        with st.spinner("🍰 MR HÀO đang suy nghĩ..."):
 
-        with st.spinner(
-            "🍰 MR HÀO đang suy nghĩ..."
-        ):
-
-            answer = ask_ai(question)
+            if cart_answer:
+                answer = cart_answer
+            else:
+                answer = ask_ai(question)
 
         st.markdown(answer)
 
-
-    # Lưu câu trả lời
-    st.session_state.messages.append(
-        {
-            "role": "assistant",
-            "content": answer
-        }
-    )
-
-
-# =========================================================
-# CÂU HỎI GỢI Ý
-# =========================================================
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": answer,
+    })
 
 st.caption(
-    "💡 Bạn có thể hỏi: "
-    "“Bánh nào rẻ nhất?” • "
+    "💡 Ví dụ: “Bánh nào rẻ nhất?” • "
     "“Mình có 100k nên mua gì?” • "
-    "“Bánh nào hợp sinh nhật?” • "
-    "“Cách đặt bánh?”"
+    "“Thêm 2 bánh dâu vào giỏ” • "
+    "“Giỏ hàng của mình bao nhiêu?”"
 )
 
-
 # =========================================================
-# QUẢN TRỊ
+# ADMIN
 # =========================================================
 
 st.divider()
-
 st.header("🔐 KHU VỰC QUẢN TRỊ")
 
 password = st.text_input(
     "Mật khẩu quản trị",
-    type="password"
+    type="password",
 )
 
+try:
+    ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
+except Exception:
+    ADMIN_PASSWORD = "MRHAO2026"
 
-DEMO_PASSWORD = "MRHAO2026"
+if st.button("🔑 ĐĂNG NHẬP QUẢN TRỊ"):
 
-
-if st.button(
-    "🔑 ĐĂNG NHẬP QUẢN TRỊ"
-):
-
-    if password == DEMO_PASSWORD:
-
-        st.success(
-            "✅ Đăng nhập thành công!"
-        )
-
-        st.write(
-            f"🍰 Số sản phẩm: {len(cakes)}"
-        )
-
+    if password == ADMIN_PASSWORD:
+        st.success("✅ Đăng nhập thành công!")
+        st.write(f"🍰 Số sản phẩm: {len(cakes)}")
         st.write(
             f"🛒 Số loại bánh trong giỏ: "
             f"{len(st.session_state.cart)}"
         )
-
         st.write(
-            f"💰 Tổng giỏ: {total:,} VNĐ"
+            f"💰 Tổng giỏ: {cart_total():,} VNĐ"
         )
-
     else:
-
-        st.error(
-            "❌ Mật khẩu không đúng."
-        )
-
+        st.error("❌ Mật khẩu không đúng.")
 
 # =========================================================
 # FOOTER
 # =========================================================
 
-st.divider()
-
-st.caption(
-    "🍰 MR HÀO BAKERY | "
-    "Built with Python + Streamlit + AI"
-        )
+st.markdown("""
+<div class="footer">
+    🍰 MR HÀO BAKERY<br>
+    Python + Streamlit + AI
+</div>
+""", unsafe_allow_html=True)
